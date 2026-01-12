@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bookshelf App Raihan</title>
+    <!-- WEBSITE INI DIBUAT OLEH MUHAMMAD RAIHAN UNTUK SUBMISSION DICODING  -->
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="main.js"></script>
+  </head>
+  <body>
+    <div class="bg-orbs" aria-hidden="true">
+      <span class="orb orb-a"></span>
+      <span class="orb orb-b"></span>
+      <span class="orb orb-c"></span>
+    </div>
+
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <div class="brand">
+          <div class="brand__logo" aria-hidden="true">📚</div>
+          <div>
+            <h1 class="brand__title">Bookshelf Hanz</h1>
+            <p class="brand__subtitle">V3 • Drag&Drop • QR Scan • Rating</p>
+          </div>
+        </div>
+
+        <div class="topbar__actions">
+          <button class="chip" id="scanBtn" type="button" title="Scan QR (kamera)">
+            <span class="chip__icon" aria-hidden="true">📷</span>
+            <span class="chip__text">Scan QR</span>
+          </button>
+
+          <button class="chip" id="themeToggle" type="button" title="Toggle Theme">
+            <span class="chip__icon" aria-hidden="true">🌙</span>
+            <span class="chip__text">Theme</span>
+          </button>
+
+          <button class="chip" id="exportBtn" type="button" title="Export JSON">
+            <span class="chip__icon" aria-hidden="true">⬇️</span>
+            <span class="chip__text">Export</span>
+          </button>
+
+          <label class="chip chip--file" title="Import JSON">
+            <span class="chip__icon" aria-hidden="true">⬆️</span>
+            <span class="chip__text">Import</span>
+            <input id="importInput" type="file" accept="application/json" hidden />
+          </label>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="stats">
+        <div class="stat">
+          <div class="stat__label">Total</div>
+          <div class="stat__value" id="statTotal">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Belum selesai</div>
+          <div class="stat__value" id="statIncomplete">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat__label">Selesai</div>
+          <div class="stat__value" id="statComplete">0</div>
+        </div>
+        <div class="stat stat--accent">
+          <div class="stat__label">Progress</div>
+          <div class="stat__value"><span id="statProgress">0</span>%</div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <div class="card__header">
+            <h2>Tambah Buku Baru</h2>
+            <p class="muted">Sekarang ada <b>rating</b> + QR otomatis.</p>
+          </div>
+
+          <form id="bookForm" data-testid="bookForm" class="form">
+            <div class="field">
+              <label for="bookFormTitle">Judul</label>
+              <input id="bookFormTitle" type="text" required data-testid="bookFormTitleInput" placeholder="Contoh: Atomic Habits" />
+            </div>
+            <div class="field">
+              <label for="bookFormAuthor">Penulis</label>
+              <input id="bookFormAuthor" type="text" required data-testid="bookFormAuthorInput" placeholder="Contoh: James Clear" />
+            </div>
+            <div class="field">
+              <label for="bookFormYear">Tahun</label>
+              <input id="bookFormYear" type="number" required data-testid="bookFormYearInput" placeholder="Contoh: 2018" />
+            </div>
+
+            <!-- NEW: rating -->
+            <div class="field">
+              <label>Rating</label>
+              <div class="rating-input" id="ratingInput"></div>
+              <small class="muted">Klik bintang untuk set rating (1–5).</small>
+            </div>
+
+            <div class="field field--row">
+              <div class="switch">
+                <input id="bookFormIsComplete" type="checkbox" data-testid="bookFormIsCompleteCheckbox" />
+                <label for="bookFormIsComplete" class="switch__track" aria-hidden="true"></label>
+                <span class="switch__label">Selesai dibaca</span>
+              </div>
+
+              <button id="bookFormSubmit" type="submit" data-testid="bookFormSubmitButton" class="btn btn--primary">
+                Masukkan Buku ke rak <span id="submitSpan">Belum selesai dibaca</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card">
+          <div class="card__header">
+            <h2>Cari & Kelola</h2>
+            <p class="muted">Drag buku untuk pindah rak. Scan QR untuk autofill.</p>
+          </div>
+
+          <form id="searchBook" data-testid="searchBookForm" class="form">
+            <div class="field">
+              <label for="searchBookTitle">Judul</label>
+              <input id="searchBookTitle" type="text" data-testid="searchBookFormTitleInput" placeholder="Ketik judul..." />
+            </div>
+
+            <div class="controls">
+              <button id="searchSubmit" type="submit" data-testid="searchBookFormSubmitButton" class="btn">
+                Cari
+              </button>
+              <button id="resetBtn" type="button" class="btn btn--ghost">Reset</button>
+
+              <div class="select">
+                <label class="sr-only" for="sortSelect">Sort</label>
+                <select id="sortSelect">
+                  <option value="createdDesc">Terbaru</option>
+                  <option value="createdAsc">Terlama</option>
+                  <option value="titleAsc">Judul A-Z</option>
+                  <option value="titleDesc">Judul Z-A</option>
+                  <option value="yearDesc">Tahun (baru)</option>
+                  <option value="yearAsc">Tahun (lama)</option>
+                  <option value="ratingDesc">Rating (tinggi)</option>
+                  <option value="ratingAsc">Rating (rendah)</option>
+                </select>
+              </div>
+
+              <div class="segmented" role="tablist" aria-label="Filter">
+                <button type="button" class="segmented__btn is-active" data-filter="all">All</button>
+                <button type="button" class="segmented__btn" data-filter="incomplete">Belum</button>
+                <button type="button" class="segmented__btn" data-filter="complete">Selesai</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="tip">
+            <span aria-hidden="true">🧲</span>
+            <div>
+              <strong>Drag & Drop:</strong> tahan kartu buku → drop ke rak lain untuk pindah status.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <section class="lists">
+        <section class="card droptarget" data-dropzone="incomplete">
+          <div class="card__header card__header--row">
+            <h2>Belum selesai dibaca</h2>
+            <span class="badge" id="badgeIncomplete">0</span>
+          </div>
+
+          <div id="incompleteBookList" data-testid="incompleteBookList" class="booklist"></div>
+        </section>
+
+        <section class="card droptarget" data-dropzone="complete">
+          <div class="card__header card__header--row">
+            <h2>Selesai dibaca</h2>
+            <span class="badge" id="badgeComplete">0</span>
+          </div>
+
+          <div id="completeBookList" data-testid="completeBookList" class="booklist"></div>
+        </section>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Modal: Edit -->
+    <dialog class="modal" id="editModal">
+      <form method="dialog" class="modal__panel" id="editForm">
+        <div class="modal__header">
+          <h3>Edit Buku</h3>
+          <button class="iconbtn" value="cancel" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <input type="hidden" id="editId" />
+
+          <div class="field">
+            <label for="editTitle">Judul</label>
+            <input id="editTitle" type="text" required />
+          </div>
+
+          <div class="field">
+            <label for="editAuthor">Penulis</label>
+            <input id="editAuthor" type="text" required />
+          </div>
+
+          <div class="field">
+            <label for="editYear">Tahun</label>
+            <input id="editYear" type="number" required />
+          </div>
+
+          <!-- NEW: rating edit -->
+          <div class="field">
+            <label>Rating</label>
+            <div class="rating-input" id="editRatingInput"></div>
+          </div>
+
+          <div class="field">
+            <label class="checkbox">
+              <input id="editIsComplete" type="checkbox" />
+              <span>Selesai dibaca</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal__footer">
+          <button class="btn btn--ghost" value="cancel">Batal</button>
+          <button class="btn btn--primary" id="editSaveBtn" value="default">Simpan</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Modal: Confirm delete -->
+    <dialog class="modal" id="confirmModal">
+      <form method="dialog" class="modal__panel">
+        <div class="modal__header">
+          <h3>Hapus Buku?</h3>
+          <button class="iconbtn" value="cancel" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <p class="muted" id="confirmText">Buku ini akan dihapus permanen.</p>
+          <input type="hidden" id="deleteId" />
+        </div>
+
+        <div class="modal__footer">
+          <button class="btn btn--ghost" value="cancel">Batal</button>
+          <button class="btn btn--danger" id="confirmDeleteBtn" value="default">Hapus</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- NEW: Scan QR modal -->
+    <dialog class="modal" id="scanModal">
+      <div class="modal__panel">
+        <div class="modal__header">
+          <h3>Scan QR</h3>
+          <button class="iconbtn" id="scanCloseBtn" aria-label="Close">✕</button>
+        </div>
+
+        <div class="modal__body">
+          <p class="muted" id="scanHint">
+            Arahkan kamera ke QR buku. Hasil scan akan <b>autofill</b> form (atau update jika ID sama).
+          </p>
+
+          <div class="scanbox">
+            <video id="scanVideo" autoplay playsinline muted></video>
+            <div class="scanbox__overlay" aria-hidden="true"></div>
+          </div>
+
+          <div class="controls" style="margin-top:12px;">
+            <button class="btn btn--primary" id="scanStartBtn" type="button">Start</button>
+            <button class="btn btn--ghost" id="scanStopBtn" type="button">Stop</button>
+          </div>
+
+          <small class="muted" id="scanSupportNote" style="display:block;margin-top:8px;"></small>
+        </div>
+      </div>
+    </dialog>
+  </body>
+</html>
