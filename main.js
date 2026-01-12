@@ -1,6 +1,6 @@
 // CODE MUHAMMAD RAIHAN
 //SUBMISSION DICODING
-const STORAGE_KEY = "BOOKSHELF_APP_V3";
+const STORAGE_KEY = "BOOKSHELF_APP";
 
 let books = [];
 let currentFilter = "all";
@@ -129,6 +129,7 @@ function showToast(message, withUndo = false) {
   if (withUndo) {
     const btn = document.createElement("button");
     btn.className = "btn btn--tiny";
+    btn.type = "button";
     btn.innerHTML = `${Icons.undo} Undo`;
     attachRipple(btn);
     btn.addEventListener("click", () => undoDelete());
@@ -138,8 +139,11 @@ function showToast(message, withUndo = false) {
   dom.toast.appendChild(wrap);
   dom.toast.classList.add("is-show");
   clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => dom.toast.classList.remove("is-show"), 2600);
+
+  const duration = withUndo ? 6000 : 2600; // <- penting
+  showToast._t = setTimeout(() => dom.toast.classList.remove("is-show"), duration);
 }
+
 
 function setTheme(mode) {
   if (mode === "light") document.documentElement.classList.add("light");
@@ -493,24 +497,34 @@ function saveEdit() {
 function openDeleteConfirm(id) {
   const book = books.find((b) => b.id === id);
   if (!book) return;
+
+  if (!dom.confirmModal || typeof dom.confirmModal.showModal !== "function") {
+    const ok = confirm(`Buku "${book.title}" akan dihapus permanen.`);
+    if (ok) deleteBook(id);
+    return;
+  }
+
   dom.deleteId.value = id;
   dom.confirmText.textContent = `Buku "${book.title}" akan dihapus permanen.`;
   dom.confirmModal.showModal();
 }
 
+
 function deleteBook(id) {
-  const idx = books.findIndex((b) => b.id === id);
-  if (idx === -1) return;
-
-  const node = document.querySelector(`[data-bookid="${CSS.escape(id)}"][data-testid="bookItem"]`);
+  const node = document.querySelector(
+    `[data-bookid="${CSS.escape(id)}"][data-testid="bookItem"]`
+  );
   if (node) node.classList.add("is-leaving");
-
-  const removed = books[idx];
-  const removedIndex = idx;
 
   if (lastDeleted?.timeoutId) clearTimeout(lastDeleted.timeoutId);
 
   setTimeout(() => {
+    const idx = books.findIndex((b) => b.id === id);
+    if (idx === -1) return;
+
+    const removed = books[idx];
+    const removedIndex = idx;
+
     books.splice(idx, 1);
     save();
     render();
@@ -518,22 +532,49 @@ function deleteBook(id) {
     lastDeleted = {
       book: removed,
       index: removedIndex,
-      timeoutId: setTimeout(() => { lastDeleted = null; }, 5000),
+      timeoutId: setTimeout(() => {
+        lastDeleted = null;
+      }, 5000),
     };
 
     showToast("🗑️ Buku dihapus", true);
   }, 200);
 }
 
+
 function undoDelete() {
   if (!lastDeleted) return;
+
   clearTimeout(lastDeleted.timeoutId);
+
+  if (books.some((b) => b.id === lastDeleted.book.id)) {
+    lastDeleted = null;
+    return;
+  }
+
   books.splice(Math.min(lastDeleted.index, books.length), 0, lastDeleted.book);
   lastDeleted = null;
   save();
   render();
   showToast("✅ Undo berhasil");
 }
+
+function seedOnce() {
+  const seeded = localStorage.getItem("BOOKSHELF_SEEDED") === "1";
+  if (seeded) return;
+
+  if (books.length === 0) {
+    books = [
+      { id: uid(), title: "Judul Buku 1", author: "Penulis Buku 1", year: 2030, rating: 4, isComplete: false, createdAt: Date.now()-20000 },
+      { id: uid(), title: "Judul Buku 2", author: "Penulis Buku 2", year: 2030, rating: 5, isComplete: true, createdAt: Date.now()-10000 },
+    ];
+    save();
+  }
+
+  localStorage.setItem("BOOKSHELF_SEEDED", "1");
+}
+
+
 
 function exportJSON() {
   const blob = new Blob([JSON.stringify(books, null, 2)], { type: "application/json" });
@@ -680,6 +721,13 @@ function stopScan() {
   }
   dom.scanVideo.srcObject = null;
   showToast("Scan berhenti bro");
+}
+
+function cleanupOldKeys() {
+  const oldKeys = ["BOOKSHELF_APP", "BOOKSHELF_APP_V2", "BOOKSHELF_APP_V3"];
+  oldKeys.forEach((k) => {
+    if (k !== STORAGE_KEY) localStorage.removeItem(k);
+  });
 }
 
 async function scanLoop() {
@@ -851,21 +899,13 @@ dom.scanModal.addEventListener("close", () => stopScan());
 
 (function init() {
   initTheme();
+  cleanupOldKeys();
   load();
 
- 
   renderRatingChips(dom.ratingInput, formRating, setFormRating);
   renderRatingChips(dom.editRatingInput, editRating, (v) => (editRating = v));
 
   setupDropzones();
-
-  if (books.length === 0) {
-    books = [
-      { id: uid(), title: "Judul Buku 1", author: "Penulis Buku 1", year: 2030, rating: 4, isComplete: false, createdAt: Date.now()-20000 },
-      { id: uid(), title: "Judul Buku 2", author: "Penulis Buku 2", year: 2030, rating: 5, isComplete: true, createdAt: Date.now()-10000 },
-    ];
-    save();
-  }
-
+  seedOnce(); 
   render();
 })();
