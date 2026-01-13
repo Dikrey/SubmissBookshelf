@@ -234,13 +234,13 @@
     <!-- Modal: Confirm delete -->
     <dialog class="modal" id="confirmModal">
   <div class="modal__panel"> 
-    <div class="modal__header">
-      <h3>Hapus Buku?</h3>
+    <div class="modal__header" role="document">
+      <h3>Yakin Hapus Buku?</h3>
       <button class="iconbtn" onclick="document.getElementById('confirmModal').close()" aria-label="Close">✕</button>
     </div>
 
     <div class="modal__body">
-      <p class="muted" id="confirmText">Buku ini akan dihapus permanen.</p>
+      <p class="muted-modal-hapus" id="confirmText">Buku ini akan dihapus permanen.</p>
       <input type="hidden" id="deleteId" /> 
     </div>
 
