@@ -281,6 +281,7 @@ function bookTemplate(book) {
 
   const copyBtn = document.createElement("button");
   copyBtn.className = "btn btn--tiny";
+  copyBtn.type = "button";
   copyBtn.innerHTML = `${Icons.copy} Copy`;
   copyBtn.title = "Copy detail buku";
   attachRipple(copyBtn);
@@ -303,31 +304,37 @@ function bookTemplate(book) {
   actions.className = "book__actions";
 
   const toggleBtn = document.createElement("button");
+  toggleBtn.type = "button";
   toggleBtn.className = "btn btn--tiny";
   toggleBtn.setAttribute("data-testid", "bookItemIsCompleteButton");
   toggleBtn.innerHTML = `${Icons.check} ${book.isComplete ? "Belum selesai" : "Selesai dibaca"}`;
   attachRipple(toggleBtn);
   toggleBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
     ev.stopPropagation();
     toggleComplete(book.id);
   });
 
   const deleteBtn = document.createElement("button");
+  deleteBtn.type = "button";
   deleteBtn.className = "btn btn--danger btn--tiny";
   deleteBtn.setAttribute("data-testid", "bookItemDeleteButton");
   deleteBtn.innerHTML = `${Icons.trash} Hapus`;
   attachRipple(deleteBtn);
   deleteBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
     ev.stopPropagation();
     openDeleteConfirm(book.id);
   });
 
   const editBtn = document.createElement("button");
+  editBtn.type = "button";
   editBtn.className = "btn btn--primary btn--tiny";
   editBtn.setAttribute("data-testid", "bookItemEditButton");
   editBtn.innerHTML = `${Icons.edit} Edit`;
   attachRipple(editBtn);
   editBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
     ev.stopPropagation();
     openEdit(book.id);
   });
@@ -498,47 +505,43 @@ function openDeleteConfirm(id) {
   const book = books.find((b) => b.id === id);
   if (!book) return;
 
-  if (!dom.confirmModal || typeof dom.confirmModal.showModal !== "function") {
-    const ok = confirm(`Buku "${book.title}" akan dihapus permanen.`);
-    if (ok) deleteBook(id);
-    return;
+  if (dom.confirmText) {
+    dom.confirmText.textContent = `Buku "${book.title}" akan dihapus permanen.`;
   }
+  const newConfirmBtn = dom.confirmDeleteBtn.cloneNode(true);
+  dom.confirmDeleteBtn.parentNode.replaceChild(newConfirmBtn, dom.confirmDeleteBtn);
+  
+  dom.confirmDeleteBtn = newConfirmBtn;
 
-  dom.deleteId.value = id;
-  dom.confirmText.textContent = `Buku "${book.title}" akan dihapus permanen.`;
+  dom.confirmDeleteBtn.addEventListener('click', (ev) => {
+    ev.preventDefault();
+    deleteBook(id);
+    dom.confirmModal.close();
+  }, { once: true });
+
   dom.confirmModal.showModal();
 }
 
-
 function deleteBook(id) {
-  const node = document.querySelector(
-    `[data-bookid="${CSS.escape(id)}"][data-testid="bookItem"]`
-  );
-  if (node) node.classList.add("is-leaving");
+  const idx = books.findIndex((b) => b.id === id);
+  if (idx === -1) return;
+
+  const removed = books[idx];
+  const removedIndex = idx;
+
+  books.splice(idx, 1);
+
+  save(); 
+  render();
 
   if (lastDeleted?.timeoutId) clearTimeout(lastDeleted.timeoutId);
+  lastDeleted = {
+    book: removed,
+    index: removedIndex,
+    timeoutId: setTimeout(() => { lastDeleted = null; }, 5000),
+  };
 
-  setTimeout(() => {
-    const idx = books.findIndex((b) => b.id === id);
-    if (idx === -1) return;
-
-    const removed = books[idx];
-    const removedIndex = idx;
-
-    books.splice(idx, 1);
-    save();
-    render();
-
-    lastDeleted = {
-      book: removed,
-      index: removedIndex,
-      timeoutId: setTimeout(() => {
-        lastDeleted = null;
-      }, 5000),
-    };
-
-    showToast("🗑️ Buku dihapus", true);
-  }, 200);
+  showToast("🗑️ Buku dihapus", true);
 }
 
 
@@ -669,7 +672,7 @@ function setupDropzones() {
   });
 }
 
-// ---------- Scan QR (BarcodeDetector) ----------
+
 function isBarcodeDetectorSupported() {
   return "BarcodeDetector" in window;
 }
@@ -858,12 +861,6 @@ dom.editForm.addEventListener("submit", (e) => {
   dom.editModal.close();
 });
 
-dom.confirmDeleteBtn.addEventListener("click", (e) => {
-  e.preventDefault();
-  const id = dom.deleteId.value;
-  dom.confirmModal.close();
-  deleteBook(id);
-});
 
 dom.themeToggle.addEventListener("click", () => {
   const isLight = document.documentElement.classList.contains("light");
@@ -906,6 +903,6 @@ dom.scanModal.addEventListener("close", () => stopScan());
   renderRatingChips(dom.editRatingInput, editRating, (v) => (editRating = v));
 
   setupDropzones();
-  seedOnce(); 
+  //seedOnce(); 
   render();
 })();

@@ -100,7 +100,7 @@
 
             <div class="field field--row">
               <div class="switch">
-                <input id="bookFormIsComplete" type="checkbox" data-testid="bookFormIsCompleteCheckbox" />
+                <input id="bookFormIsComplete" type="checkbox" data-testid="bookFormIsCompleteCheckbox" label="completeBookList>
                 <label for="bookFormIsComplete" class="switch__track" aria-hidden="true"></label>
                 <span class="switch__label">Selesai dibaca</span>
               </div>
@@ -233,23 +233,23 @@
 
     <!-- Modal: Confirm delete -->
     <dialog class="modal" id="confirmModal">
-      <form method="dialog" class="modal__panel">
-        <div class="modal__header">
-          <h3>Hapus Buku?</h3>
-          <button class="iconbtn" value="cancel" aria-label="Close">✕</button>
-        </div>
+  <div class="modal__panel"> 
+    <div class="modal__header">
+      <h3>Hapus Buku?</h3>
+      <button class="iconbtn" onclick="document.getElementById('confirmModal').close()" aria-label="Close">✕</button>
+    </div>
 
-        <div class="modal__body">
-          <p class="muted" id="confirmText">Buku ini akan dihapus permanen.</p>
-          <input type="hidden" id="deleteId" />
-        </div>
+    <div class="modal__body">
+      <p class="muted" id="confirmText">Buku ini akan dihapus permanen.</p>
+      <input type="hidden" id="deleteId" /> 
+    </div>
 
-        <div class="modal__footer">
-          <button class="btn btn--ghost" value="cancel">Batal</button>
-          <button class="btn btn--danger" id="confirmDeleteBtn" value="default">Hapus</button>
-        </div>
-      </form>
-    </dialog>
+    <div class="modal__footer">
+      <button type="button" class="btn btn--ghost" onclick="document.getElementById('confirmModal').close()">Batal</button>
+      <button type="button" class="btn btn--danger" id="confirmDeleteBtn">Hapus</button>
+    </div>
+  </div>
+</dialog>
 
     <!-- NEW: Scan QR modal -->
     <dialog class="modal" id="scanModal">
